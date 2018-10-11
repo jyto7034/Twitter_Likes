@@ -1,11 +1,17 @@
 from selenium import webdriver
 import sys
+import time
+
 
 options = webdriver.ChromeOptions()
 options.add_argument('headless')
 driver = webdriver.Chrome(options=options)
 imageLinks = []
 LinkCount=0
+ScrollCount=10
+LoadingDelay = 3
+
+LinkList = open("L:\LinkList.txt", 'w')
 
 class Twitter():
     global driver
@@ -22,20 +28,31 @@ class Twitter():
 
         driver.find_element_by_class_name("EdgeButtom--medium").click()
 
-
     def Get_Images(self):
-        global LinkCount
+        global LinkCount, ScrollCount, LoadingDelay
+        while(ScrollCount > 0):
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            ScrollCount-=1
+            time.sleep(LoadingDelay)
+
         try:
+
             for link in driver.find_elements_by_css_selector('div.AdaptiveMedia-photoContainer'):
                 imageLinks.append(link.get_attribute('data-image-url'))
+                print("[!]Found :%s" % len(imageLinks))
                 LinkCount += 1
+
                 if imageLinks[LinkCount-2] == imageLinks[LinkCount-1] and LinkCount > 1:
                     print('Del')
                     del imageLinks[imageLinks]
                     LinkCount -= 1
-                if LinkCount > 10 :
+                else:
+                    LinkList.write(imageLinks[LinkCount-1]+ '\n')
+
+                if LinkCount > 50:
                     print(imageLinks, LinkCount)
                     sys.exit(1)
+
             print(imageLinks, LinkCount)
         except Exception as e:
             print( "error:")
@@ -78,3 +95,11 @@ if __name__ == "__main__":
 # driver.get_screenshot_as_file('naver_main_headless.png')
 #
 # driver.quit()
+#
+#
+# from selenium import webdriver
+# from requests import *
+#
+# driver = webdriver.Firefox()
+# driver.get("https://twitter.com/login")
+#
