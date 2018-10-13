@@ -1,21 +1,25 @@
 from selenium import webdriver
 import sys
 import time
+import urllib.request
+import os
 
-
+path ="‪H:\Parsing\chromedriver.exe"
 options = webdriver.ChromeOptions()
 options.add_argument('headless')
-driver = webdriver.Chrome(options=options)
+driver = webdriver.Chrome(r"H:\Parsing\chromedriver.exe", options=options)
+os.system('cls')
 imageLinks = []
 LinkCount=0
 ScrollCount=10
 LoadingDelay = 3
+Save_Path = "L:\\"
 
 LinkList = open("L:\LinkList.txt", 'w')
 
 class Twitter():
     global driver
-    def login_twitter(username, password):
+    def login_twitter(self, username, password):
         driver.get("https://twitter.com/i/likes")
         username_field = driver.find_element_by_class_name("js-username-field")
         password_field = driver.find_element_by_class_name("js-password-field")
@@ -46,28 +50,47 @@ class Twitter():
                     print('Del')
                     del imageLinks[imageLinks]
                     LinkCount -= 1
-                else:
-                    LinkList.write(imageLinks[LinkCount-1]+ '\n')
+                # else:
+                #     LinkList.write(imageLinks[LinkCount-1]+ '\n')
 
-                if LinkCount > 50:
+                if LinkCount > 10:
                     print(imageLinks, LinkCount)
-                    sys.exit(1)
+                    # sys.exit(1)
+                    return
 
-            print(imageLinks, LinkCount)
         except Exception as e:
             print( "error:")
             print(e)
 
+    def Download_Images(self):
+        print("cALL")
+        for link in imageLinks:
+            Image_name = link.replace("https://pbs.twimg.com/media/", "")
+            with urllib.request.urlopen(link) as res:
+                res_data = res.read()
+                with open(Save_Path  + Image_name, 'wb') as file:
+                    file.write(res_data)
+            print(link)
+    def Run(self, usernamep, passwordp):
+        self.login_twitter(usernamep, passwordp)
+        self.Get_Images()
+        self.Download_Images()
+
+    def UI(self):
+        print(" _______       _ _   _              _      _ _           _____                    _           ")
+        print(" |__   __|     (_| | | |            | |    (_| |         / ____|                  | |          ")
+        print("    | __      ___| |_| |_ ___ _ __  | |     _| | _____  | |     _ __ __ ___      _| | ___ _ __ ")
+        print("    | \ \ /\ / | | __| __/ _ | '__| | |    | | |/ / _ \ | |    | '__/ _` \ \ /\ / | |/ _ | '__|")
+        print("    | |\ V  V /| | |_| ||  __| |    | |____| |   |  __/ | |____| | | (_| |\ V  V /| |  __| |   ")
+        print("    |_| \_/\_/ |_|\__|\__\___|_|    |______|_|_|\_\___|  \_____|_|  \__,_| \_/\_/ |_|\___|_|   ")
+
+
 
 
 if __name__ == "__main__":
-    Twitter.login_twitter("mlpmain6@gmail.com", "dlrudgus12")
-    ti = Twitter()
-    # driver.implicitly_wait(10)
-    ti.Get_Images()
-
-
-
+    t = Twitter()
+    # t.Run("mlpmain6@gmail.com", "dlrudgus12")
+    t.UI()
 
 # from selenium import webdriver
 # from selenium.webdriver.chrome.options import Options
