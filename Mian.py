@@ -3,40 +3,117 @@ import sys
 import time
 import urllib.request
 import os
+import pyfiglet
+from ctypes import *
+import multiprocessing
+import asyncio
+import threading
 
-path ="‪H:\Parsing\chromedriver.exe"
+path = "‪H:\Parsing\chromedriver.exe"
 options = webdriver.ChromeOptions()
+options.add_argument("--disable-setuid-sandbox")
 options.add_argument('headless')
 driver = webdriver.Chrome(r"H:\Parsing\chromedriver.exe", options=options)
-os.system('cls')
+# os.system('cls')
+
+
 imageLinks = []
-LinkCount=0
-ScrollCount=10
+LinkCount = 0
+ScrollCount = 10
 LoadingDelay = 3
 Save_Path = "L:\\"
+LoginSuccess = True
+GetPage = True
+LoadingArt = ["|", "/", "~", "\\"]
+ShowLoading = False
 
-LinkList = open("L:\LinkList.txt", 'w')
+# LinkList = open("L:\LinkList.txt", 'w')
 
-class Twitter():
+STD_OUTPUT_HANDLE = -11
+
+
+class COORD(Structure):
+    pass
+
+
+COORD._fields_ = [ ("X", c_short), ("Y", c_short) ]
+
+
+def printxy(r, c, s):
+    h = windll.kernel32.GetStdHandle(STD_OUTPUT_HANDLE)
+    windll.kernel32.SetConsoleCursorPosition(h, COORD(c, r))
+
+    c = s.encode("windows-1252")
+    windll.kernel32.WriteConsoleA(h, c_char_p(c), len(c), None, None)
+
+
+class Twitter:
     global driver
-    def login_twitter(self, username, password):
-        driver.get("https://twitter.com/i/likes")
+
+    def Loading_UI(self):
+        global LoadingArt, ShowLoading
+        while True:
+            for art in LoadingArt:
+                if ShowLoading is True:
+                    printxy(21, 50, art)
+                    time.sleep(0.2)
+                # else:
+                #     print("return")
+                #     return
+
+    def LoadingThread(self):
+        Loading = threading.Thread(target=self.Loading_UI)
+        Loading.daemon = True
+        Loading.start()
+
+    def login_twitter(self):
+        global GetPage, LoginSuccess, ShowLoading
+        self.UI()
+
+        if LoginSuccess is not True:
+            printxy(22, 51, "Login Failed")
+
+        if GetPage:
+            driver.get("https://twitter.com/i/likes")
+            GetPage = False
+
+        printxy(15, 45, "ID > ")
+        username = input()
+        printxy(17, 45, "PW > ")
+        password = input()
+
+        ShowLoading = True
+
         username_field = driver.find_element_by_class_name("js-username-field")
         password_field = driver.find_element_by_class_name("js-password-field")
 
         username_field.send_keys(username)
-        driver.implicitly_wait(1)
+        driver.implicitly_wait(0.5)
 
         password_field.send_keys(password)
-        driver.implicitly_wait(1)
+        driver.implicitly_wait(0.5)
 
-        driver.find_element_by_class_name("EdgeButtom--medium").click()
+        if driver.find_element_by_class_name("EdgeButtom--medium").click() is None:
+            os.system("cls")
+            LoginSuccess = False
+            ShowLoading = False
+            self.login_twitter()
+        else:
+            LoginSuccess = True
+            ShowLoading = False
+
+        return 0
+
+    def LoginThread(self):
+        Login = threading.Thread(target=self.login_twitter)
+        Login.daemon = True
+        Login.start()
 
     def Get_Images(self):
         global LinkCount, ScrollCount, LoadingDelay
-        while(ScrollCount > 0):
+        while (ScrollCount > 0):
             driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            ScrollCount-=1
+            ScrollCount -= 1
             time.sleep(LoadingDelay)
 
         try:
@@ -46,7 +123,7 @@ class Twitter():
                 print("[!]Found :%s" % len(imageLinks))
                 LinkCount += 1
 
-                if imageLinks[LinkCount-2] == imageLinks[LinkCount-1] and LinkCount > 1:
+                if imageLinks[LinkCount - 2] == imageLinks[LinkCount - 1] and LinkCount > 1:
                     print('Del')
                     del imageLinks[imageLinks]
                     LinkCount -= 1
@@ -55,42 +132,45 @@ class Twitter():
 
                 if LinkCount > 10:
                     print(imageLinks, LinkCount)
-                    # sys.exit(1)
                     return
 
         except Exception as e:
-            print( "error:")
-            print(e)
+            print("error:", e)
+
+        return 0
 
     def Download_Images(self):
-        print("cALL")
         for link in imageLinks:
             Image_name = link.replace("https://pbs.twimg.com/media/", "")
             with urllib.request.urlopen(link) as res:
                 res_data = res.read()
-                with open(Save_Path  + Image_name, 'wb') as file:
+                with open(Save_Path + Image_name, 'wb') as file:
                     file.write(res_data)
             print(link)
-    def Run(self, usernamep, passwordp):
-        self.login_twitter(usernamep, passwordp)
-        self.Get_Images()
-        self.Download_Images()
+        return 0
 
     def UI(self):
-        print(" _______       _ _   _              _      _ _           _____                    _           ")
-        print(" |__   __|     (_| | | |            | |    (_| |         / ____|                  | |          ")
-        print("    | __      ___| |_| |_ ___ _ __  | |     _| | _____  | |     _ __ __ ___      _| | ___ _ __ ")
-        print("    | \ \ /\ / | | __| __/ _ | '__| | |    | | |/ / _ \ | |    | '__/ _` \ \ /\ / | |/ _ | '__|")
-        print("    | |\ V  V /| | |_| ||  __| |    | |____| |   |  __/ | |____| | | (_| |\ V  V /| |  __| |   ")
-        print("    |_| \_/\_/ |_|\__|\__\___|_|    |______|_|_|\_\___|  \_____|_|  \__,_| \_/\_/ |_|\___|_|   ")
+        printxy(28, 110, "v 1.0")
+        printxy(6, 20, "  _______       _ _   _               _____                    _            ")
+        printxy(7, 20, " |__   __|     (_| | | |             / ____|                  | |          ")
+        printxy(8, 20, "    | __      ___| |_| |_ ___ _ __  | |     _ __ __ ___      _| | ___ _ __ ")
+        printxy(9, 20, "    | \ \ /\ / | | __| __/ _ | '__| | |    | '__/ _` \ \ /\ / | |/ _ | '__|")
+        printxy(10, 20, "    | |\ V  V /| | |_| ||  __| |    | |____| | | (_| |\ V  V /| |  __| |   ")
+        printxy(11, 20, "    |_| \_/\_/ |_|\__|\__\___|_|     \_____|_|  \__,_| \_/\_/ |_|\___|_|   ")
+        printxy(12, 20, "                                                                           ")
 
-
+    def Run(self):
+        self.login_twitter()
+        self.Get_Images()
+        self.Download_Images()
 
 
 if __name__ == "__main__":
     t = Twitter()
-    # t.Run("mlpmain6@gmail.com", "dlrudgus12")
-    t.UI()
+    # t.LoadingThread()
+    t.LoginThread()
+
+
 
 # from selenium import webdriver
 # from selenium.webdriver.chrome.options import Options
@@ -99,7 +179,7 @@ if __name__ == "__main__":
 # options.add_argument('headless')
 #
 # # initialize the driver
-# driver = webdriver.Chrome(options=options)
+# driver = webdriver.Chrome(r"H:\Parsing\chromedriver.exe", options=options)
 #
 # driver.get("https://www.naver.com/")
 #
@@ -126,3 +206,14 @@ if __name__ == "__main__":
 # driver = webdriver.Firefox()
 # driver.get("https://twitter.com/login")
 #
+
+# print(pyfiglet.figlet_format("                         ", font="banner3-D"))
+# print(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::")
+# printxy(2, 2, pyfiglet.figlet_format(" Twitter ", font="banner3-D"))
+# print(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::\r                                                                                                      ")
+# x = 5
+# for str in pyfiglet.figlet_format(" Twitter ", font="banner3-D"):
+#     # if str == '\n':
+#     #     break
+#     printxy(0, x, str)
+#     x += 1
