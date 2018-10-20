@@ -21,7 +21,7 @@ driver = webdriver.Chrome(r"H:\Parsing\chromedriver.exe", options=options)
 imageLinks = []
 LinkCount = 0
 ScrollCount = 20
-LoadingDelay = 1
+LoadingDelay = 5
 Save_Path = "L:\\"
 LoginSuccess = True
 GetPage = True
@@ -157,22 +157,44 @@ class Twitter:
         except Exception as e:
             print("error:", e)
 
+    def SaveFile(self):
+        if os.path.isfile("L:\LinkList.txt"):
+            print("Remove")
+            os.remove("L:\LinkList.txt")
+
+        print("File Open")
+        html = open("L:\LinkList.txt", 'wb')
+
+        print("data=")
+        data = driver.page_source
+
+        print("Write")
+        html.write(to_bytes(data))
+
+        html.close()
+
     def Get_Images(self):
         global LinkCount, ScrollCount, LoadingDelay
         elem = driver.find_element_by_tag_name("body")
+        now = time.localtime()
+        s = "%04d-%02d-%02d %02d:%02d:%02d" % (
+        now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
+        print(s)
+
+        count = 0
         while (ScrollCount > 0):
+            count += 1
             # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            elem.send_keys(Keys.PAGE_DOWN)
+            print("Page Down")
+            # elem.send_keys(Keys.PAGE_DOWN)
+            elem.send_keys(Keys.END)
 
             time.sleep(LoadingDelay)
-            if os.path.isfile("L:\LinkList.txt"):
-                os.remove("L:\LinkList.txt")
-
-            html = open("L:\LinkList.txt", 'wb')
-            data = driver.page_source
-            html.write(to_bytes(data))
-            html.close()
+            if count % 5 == 0:
+                self.SaveFile()
             # ScrollCount -=1
+
+            print(count)
         return 0
 
     def Download_Images(self):
