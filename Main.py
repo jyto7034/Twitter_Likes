@@ -166,9 +166,11 @@ class Twitter:
         html = open("L:\LinkList.txt", 'wb')
 
         print("data=")
+        data = ''
         data = driver.page_source
 
         print("Write")
+        print(sys.getsizeof(data))
         html.write(to_bytes(data))
 
         html.close()
