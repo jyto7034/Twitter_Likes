@@ -26,7 +26,7 @@ LinkCount = 0
 ScrollCount = 20
 LoadingDelay = 5
 Save_Path = r"L:\pic"
-LoginSuccess = True
+LoginSuccess = False
 GetPage = True
 LoadingArt = ["|", "/", "~", "\\"]
 ShowLoading = False
@@ -120,6 +120,7 @@ class Twitter:
         password_field.send_keys(password)
         driver.implicitly_wait(0.5)
         driver.find_element_by_class_name("EdgeButtom--medium").click()
+        LoginSuccess =True
         # if driver.find_element_by_class_name("EdgeButtom--medium").click() is None:
         #     os.system("cls")
         #     LoginSuccess = False
@@ -235,7 +236,9 @@ class Twitter:
         printxy(12, 20, "                                                                           ")
 
     def Run(self):
-        self.login_twitter()
+        if LoginSuccess is False:
+            self.login_twitter()
+
         time.sleep(5)
         self.Scroll()
 
