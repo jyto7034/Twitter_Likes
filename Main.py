@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.firefox.firefox_binary import FirefoxBinary
 import sys
 import time
 import urllib.request
@@ -14,8 +15,9 @@ path = "‪H:\Parsing\chromedriver.exe"
 # options = webdriver.ChromeOptions()
 # options.add_argument("--disable-setuid-sandbox")
 # options.add_argument('headless')
-driver = webdriver.Firefox()
-time.sleep(5)
+binary = FirefoxBinary(r'C:\Program Files\Firefox Developer Edition\firefox.exe')
+driver = webdriver.Firefox(executable_path=r"C:\Twitter_Likes\geckodriver.exe", log_path=r"C:\Twitter_Likes\geckodriver.log")
+driver.get("https://twitter.com/i/likes")
 os.system('cls')
 
 
@@ -23,11 +25,15 @@ imageLinks = []
 LinkCount = 0
 ScrollCount = 20
 LoadingDelay = 5
-Save_Path = "C:\\PIC"
+Save_Path = r"L:\pic"
 LoginSuccess = True
 GetPage = True
 LoadingArt = ["|", "/", "~", "\\"]
 ShowLoading = False
+
+scrollEnd = False
+getimageEnd = False
+
 
 
 def to_bytes(bytes_or_str):
@@ -79,22 +85,16 @@ class Twitter:
                 #     print("return")
                 #     return
 
-    def LoadingThread(self):
-        Loading = threading.Thread(target=self.Loading_UI)
-        Loading.daemon = True
-        Loading.start()
-
     def login_twitter(self):
         global GetPage, LoginSuccess, ShowLoading
         self.UI()
-        time.sleep(10)
 
-        print("Login Check")
+        # print("Login Check")
         if LoginSuccess is not True:
             printxy(22, 51, "Login Failed")
 
 
-        print("Get Page")
+        # print("Get Page")
         if GetPage:
             driver.get("https://twitter.com/i/likes")
             GetPage = False
@@ -131,33 +131,33 @@ class Twitter:
 
         return 0
 
-    def LoginThread(self):
-        Login = threading.Thread(target=self.login_twitter)
-        Login.daemon = True
-        Login.start()
+    def Get_Images(self, count):
+        global LinkCount
+        while(True):
+            try:
+                for link in driver.find_elements_by_css_selector('div.AdaptiveMedia-photoContainer'):
+                    imageLinks.append(link.get_attribute('data-image-url'))
+                    print("[!]Found :%s" % len(imageLinks))
+                    print(count)
+                    LinkCount += 1
 
-    def Get_ImagesThread(self):
-        time.sleep(50)
-        try:
-            for link in driver.find_elements_by_css_selector('div.AdaptiveMedia-photoContainer'):
-                imageLinks.append(link.get_attribute('data-image-url'))
-                print("[!]Found :%s" % len(imageLinks))
-                LinkCount += 1
+                    if imageLinks[LinkCount - 2] == imageLinks[LinkCount - 1] and LinkCount > 1:
+                        print('Del')
+                        del imageLinks[imageLinks]
+                        LinkCount -= 1
+                    # else:
+                    #     LinkList.write(imageLinks[LinkCount-1]+ '\n')
 
-                if imageLinks[LinkCount - 2] == imageLinks[LinkCount - 1] and LinkCount > 1:
-                    print('Del')
-                    del imageLinks[imageLinks]
-                    LinkCount -= 1
-                # else:
-                #     LinkList.write(imageLinks[LinkCount-1]+ '\n')
+                    # if LinkCount > 10:
+                    #     print(imageLinks, LinkCount)
+                    #     return
+                    count -= 1
+                    if count == 0:
+                        return 0
 
-                # if LinkCount > 10:
-                #     print(imageLinks, LinkCount)
-                #     return
-                time.sleep(2)
-
-        except Exception as e:
-            print("error:", e)
+            except Exception as e:
+                print("error:", e)
+                count -= 1
 
     def SaveFile(self):
         if os.path.isfile("L:\LinkList.txt"):
@@ -177,40 +177,51 @@ class Twitter:
 
         html.close()
 
-    def Get_Images(self):
+    def Scroll(self):
         global LinkCount, ScrollCount, LoadingDelay
         elem = driver.find_element_by_tag_name("body")
         now = time.localtime()
         s = "%04d-%02d-%02d %02d:%02d:%02d" % (
         now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
         print(s)
+        elem.send_keys(Keys.END)
 
-        count = 0
-        while (ScrollCount > 0):
-            count += 1
-            # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            print("Page Down")
-            # elem.send_keys(Keys.PAGE_DOWN)
-            elem.send_keys(Keys.END)
-
-            time.sleep(LoadingDelay)
-            # if count % 5 == 0:
-            #     self.SaveFile()
-            # ScrollCount -=1
-
-            print(count)
+        # count = 0
+        # while (ScrollCount > 0):
+        #     count += 1
+        #     # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        #     print("Page Down")
+        #     # elem.send_keys(Keys.PAGE_DOWN)
+        #     elem.send_keys(Keys.END)
+        #
+        #     time.sleep(LoadingDelay)
+        #     # if count % 5 == 0:
+        #     #     self.SaveFile()
+        #     # ScrollCount -=1
+        #
+        #     print(count)
         return 0
 
-    def Download_Images(self):
-        time.sleep(60)
-        for link in imageLinks:
-            Image_name = link.replace("https://pbs.twimg.com/media/", "")
-            with urllib.request.urlopen(link) as res:
-                res_data = res.read()
-                with open(Save_Path + Image_name, 'wb') as file:
-                    file.write(res_data)
-            print(link)
-            time.sleep(2)
+    def Download_Images(self, count):
+        while(True):
+            for link in imageLinks:
+                Image_name = link.replace("https://pbs.twimg.com/media/", "")
+
+                try:
+                    with urllib.request.urlopen(link) as res:
+                        res_data = res.read()
+                        with open(Save_Path + Image_name, 'wb') as file:
+                            file.write(res_data)
+                            imageLinks.remove(link)
+                    count -= 1
+
+                    if count == 0:
+                        return 0
+
+                except Exception as e:
+                    print(e)
+                    count -= 1
+
         return 0
 
     def UI(self):
@@ -225,19 +236,34 @@ class Twitter:
 
     def Run(self):
         self.login_twitter()
-        self.Get_Images()
+        time.sleep(5)
+        self.Scroll()
+
+        time.sleep(2)
+        self.Get_Images(5)
+
+        time.sleep(2)
+        self.Download_Images(5)
 
 
 if __name__ == "__main__":
     t = Twitter()
-    Get = multiprocessing.Process(target=t.Get_Images())
-    Get.start()
-    down = multiprocessing.Process(target=t.Get_ImagesThread())
-    down.start()
-    do = multiprocessing.Process(target=t.Download_Images())
-    do.start()
+    # t.login_twitter()
+    # print("Get_Images")
+    # Get = multiprocessing.Process(target=t.Get_Images)
+    # Get.start()
+    #
+    # print("Get_ImagesThread")
+    # down = multiprocessing.Process(target=t.Get_ImagesThread)
+    # down.start()
+    #
+    # print("Down")
+    # do = multiprocessing.Process(target=t.Download_Images)
+    # do.start()
+    while(True):
+        t.Run()
 
-
+#
 # from selenium import webdriver
 # from selenium.webdriver.chrome.options import Options
 #
@@ -271,7 +297,7 @@ if __name__ == "__main__":
 #
 # driver = webdriver.Firefox()
 # driver.get("https://twitter.com/login")
-#
+
 
 # print(pyfiglet.figlet_format("                         ", font="banner3-D"))
 # print(":::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::")
@@ -291,3 +317,26 @@ if __name__ == "__main__":
 #     a += "a"
 #
 # print(sys.getsizeof(a))
+#
+# import multiprocessing
+# import time
+# from selenium import webdriver
+#
+# driver = webdriver.Chrome(executable_path=r"C:\Twitter_Likes\chromedriver.exe")
+#
+# class
+#
+# def test():
+#     driver.quit()
+#     while(True):
+#         time.sleep(2)
+#         print("Hello2")
+#         driver.get("https://www.naver.com/")
+#
+# if __name__ == '__main__':
+#     proc = multiprocessing.Process(target=test)
+#     proc.start()
+#     while (True):
+#         time.sleep(2)
+#         print("Hello1")
+#         driver.get("https://twitter.com/login")
