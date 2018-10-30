@@ -4,25 +4,26 @@ import sys
 import time
 import urllib.request
 import os
-import pyfiglet
+# import pyfiglet
 from ctypes import *
 import multiprocessing
 import asyncio
 import threading
 
 path = "‪H:\Parsing\chromedriver.exe"
-options = webdriver.ChromeOptions()
+# options = webdriver.ChromeOptions()
 # options.add_argument("--disable-setuid-sandbox")
 # options.add_argument('headless')
-driver = webdriver.Chrome(r"H:\Parsing\chromedriver.exe", options=options)
-# os.system('cls')
+driver = webdriver.Firefox()
+time.sleep(5)
+os.system('cls')
 
 
 imageLinks = []
 LinkCount = 0
 ScrollCount = 20
 LoadingDelay = 5
-Save_Path = "L:\\"
+Save_Path = "C:\\PIC"
 LoginSuccess = True
 GetPage = True
 LoadingArt = ["|", "/", "~", "\\"]
@@ -85,8 +86,8 @@ class Twitter:
 
     def login_twitter(self):
         global GetPage, LoginSuccess, ShowLoading
-        # self.UI()
-
+        self.UI()
+        time.sleep(10)
 
         print("Login Check")
         if LoginSuccess is not True:
@@ -136,8 +137,8 @@ class Twitter:
         Login.start()
 
     def Get_ImagesThread(self):
+        time.sleep(50)
         try:
-
             for link in driver.find_elements_by_css_selector('div.AdaptiveMedia-photoContainer'):
                 imageLinks.append(link.get_attribute('data-image-url'))
                 print("[!]Found :%s" % len(imageLinks))
@@ -153,6 +154,7 @@ class Twitter:
                 # if LinkCount > 10:
                 #     print(imageLinks, LinkCount)
                 #     return
+                time.sleep(2)
 
         except Exception as e:
             print("error:", e)
@@ -192,14 +194,15 @@ class Twitter:
             elem.send_keys(Keys.END)
 
             time.sleep(LoadingDelay)
-            if count % 5 == 0:
-                self.SaveFile()
+            # if count % 5 == 0:
+            #     self.SaveFile()
             # ScrollCount -=1
 
             print(count)
         return 0
 
     def Download_Images(self):
+        time.sleep(60)
         for link in imageLinks:
             Image_name = link.replace("https://pbs.twimg.com/media/", "")
             with urllib.request.urlopen(link) as res:
@@ -207,6 +210,7 @@ class Twitter:
                 with open(Save_Path + Image_name, 'wb') as file:
                     file.write(res_data)
             print(link)
+            time.sleep(2)
         return 0
 
     def UI(self):
@@ -222,14 +226,16 @@ class Twitter:
     def Run(self):
         self.login_twitter()
         self.Get_Images()
-        self.Download_Images()
 
 
 if __name__ == "__main__":
     t = Twitter()
-    # t.LoadingThread()
-    # t.LoginThread()
-    t.Run()
+    Get = multiprocessing.Process(target=t.Get_Images())
+    Get.start()
+    down = multiprocessing.Process(target=t.Get_ImagesThread())
+    down.start()
+    do = multiprocessing.Process(target=t.Download_Images())
+    do.start()
 
 
 # from selenium import webdriver
@@ -277,3 +283,11 @@ if __name__ == "__main__":
 #     #     break
 #     printxy(0, x, str)
 #     x += 1
+#
+# import sys
+#
+# a = ""
+# for i in range(0, 100000000):
+#     a += "a"
+#
+# print(sys.getsizeof(a))
