@@ -21,11 +21,13 @@ driver.get("https://twitter.com/i/likes")
 os.system('cls')
 
 
+DownCount = 1
+
 imageLinks = []
 LinkCount = 0
 ScrollCount = 20
 LoadingDelay = 5
-Save_Path = r"L:\pic"
+Save_Path = "C:\\PIC\\"
 LoginSuccess = False
 GetPage = True
 LoadingArt = ["|", "/", "~", "\\"]
@@ -72,7 +74,7 @@ def printxy(r, c, s):
 
 
 class Twitter:
-    global driver
+    global driver, DownCount
 
     def Loading_UI(self):
         global LoadingArt, ShowLoading
@@ -137,15 +139,22 @@ class Twitter:
         while(True):
             try:
                 for link in driver.find_elements_by_css_selector('div.AdaptiveMedia-photoContainer'):
-                    imageLinks.append(link.get_attribute('data-image-url'))
-                    print("[!]Found :%s" % len(imageLinks))
-                    print(count)
-                    LinkCount += 1
 
-                    if imageLinks[LinkCount - 2] == imageLinks[LinkCount - 1] and LinkCount > 1:
-                        print('Del')
-                        del imageLinks[imageLinks]
-                        LinkCount -= 1
+                    if link in imageLinks:
+                        imageLinks.remove(link)
+                        print("Del")
+
+                    else:
+                        imageLinks.append(link.get_attribute('data-image-url'))
+                        print("[!]Found :%s" % len(imageLinks))
+                        print(count)
+                        LinkCount += 1
+
+
+                    # if imageLinks[LinkCount - 2] == imageLinks[LinkCount - 1] and LinkCount > 1:
+                    #     print('Del')
+                    #     del imageLinks[imageLinks]
+                    #     LinkCount -= 1
                     # else:
                     #     LinkList.write(imageLinks[LinkCount-1]+ '\n')
 
@@ -204,16 +213,17 @@ class Twitter:
         return 0
 
     def Download_Images(self, count):
+        count = DownCount * count
         while(True):
             for link in imageLinks:
                 Image_name = link.replace("https://pbs.twimg.com/media/", "")
-
                 try:
                     with urllib.request.urlopen(link) as res:
                         res_data = res.read()
                         with open(Save_Path + Image_name, 'wb') as file:
                             file.write(res_data)
-                            imageLinks.remove(link)
+                            # imageLinks.remove(link)
+                            print(link)
                     count -= 1
 
                     if count == 0:
@@ -236,6 +246,7 @@ class Twitter:
         printxy(12, 20, "                                                                           ")
 
     def Run(self):
+        global DownCount
         if LoginSuccess is False:
             self.login_twitter()
 
@@ -244,6 +255,8 @@ class Twitter:
 
         time.sleep(2)
         self.Get_Images(5)
+        DownCount += 1
+        # print(imageLinks)
 
         time.sleep(2)
         self.Download_Images(5)
