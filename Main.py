@@ -108,9 +108,6 @@ class Twitter:
         # printxy(17, 45, "PW > ")
         # password = input()
 
-        username = "mlpmain6@gmail.com"
-        password = "happil3571569"
-
         ShowLoading = True
 
         username_field = driver.find_element_by_class_name("js-username-field")
