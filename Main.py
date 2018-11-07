@@ -20,12 +20,19 @@ driver = webdriver.Firefox(executable_path=r"C:\Twitter_Likes\geckodriver.exe", 
 driver.get("https://twitter.com/i/likes")
 os.system('cls')
 
-
+ScanCount = 0
+DownSuccess = 0
+SuccessCount = 0
+DownCount = 0
+ImageCount = 0
 imageLinks = []
+RmvimageLinks = []
+TempLinks = []
+Temp = False
 LinkCount = 0
 ScrollCount = 20
 LoadingDelay = 5
-Save_Path = r"L:\pic"
+Save_Path = "L:\pic\\"
 LoginSuccess = False
 GetPage = True
 LoadingArt = ["|", "/", "~", "\\"]
@@ -72,7 +79,7 @@ def printxy(r, c, s):
 
 
 class Twitter:
-    global driver
+    global driver, DownCount, ImageCount, RmvimageLinks, Temp
 
     def Loading_UI(self):
         global LoadingArt, ShowLoading
@@ -81,20 +88,15 @@ class Twitter:
                 if ShowLoading is True:
                     printxy(21, 50, art)
                     time.sleep(0.2)
-                # else:
-                #     print("return")
-                #     return
 
     def login_twitter(self):
         global GetPage, LoginSuccess, ShowLoading
         self.UI()
 
-        # print("Login Check")
         if LoginSuccess is not True:
             printxy(22, 51, "Login Failed")
 
 
-        # print("Get Page")
         if GetPage:
             driver.get("https://twitter.com/i/likes")
             GetPage = False
@@ -120,45 +122,9 @@ class Twitter:
         password_field.send_keys(password)
         driver.implicitly_wait(0.5)
         driver.find_element_by_class_name("EdgeButtom--medium").click()
-        LoginSuccess =True
-        # if driver.find_element_by_class_name("EdgeButtom--medium").click() is None:
-        #     os.system("cls")
-        #     LoginSuccess = False
-        #     ShowLoading = False
-        #     self.login_twitter()
-        # else:
-        #     LoginSuccess = True
-        #     ShowLoading = False
+        LoginSuccess = True
 
         return 0
-
-    def Get_Images(self, count):
-        global LinkCount
-        while(True):
-            try:
-                for link in driver.find_elements_by_css_selector('div.AdaptiveMedia-photoContainer'):
-                    imageLinks.append(link.get_attribute('data-image-url'))
-                    print("[!]Found :%s" % len(imageLinks))
-                    print(count)
-                    LinkCount += 1
-
-                    if imageLinks[LinkCount - 2] == imageLinks[LinkCount - 1] and LinkCount > 1:
-                        print('Del')
-                        del imageLinks[imageLinks]
-                        LinkCount -= 1
-                    # else:
-                    #     LinkList.write(imageLinks[LinkCount-1]+ '\n')
-
-                    # if LinkCount > 10:
-                    #     print(imageLinks, LinkCount)
-                    #     return
-                    count -= 1
-                    if count == 0:
-                        return 0
-
-            except Exception as e:
-                print("error:", e)
-                count -= 1
 
     def SaveFile(self):
         if os.path.isfile("L:\LinkList.txt"):
@@ -169,7 +135,6 @@ class Twitter:
         html = open("L:\LinkList.txt", 'wb')
 
         print("data=")
-        data = ''
         data = driver.page_source
 
         print("Write")
@@ -184,26 +149,14 @@ class Twitter:
         now = time.localtime()
         s = "%04d-%02d-%02d %02d:%02d:%02d" % (
         now.tm_year, now.tm_mon, now.tm_mday, now.tm_hour, now.tm_min, now.tm_sec)
-        print(s)
+        # print(s)
         elem.send_keys(Keys.END)
-
-        # count = 0
-        # while (ScrollCount > 0):
-        #     count += 1
-        #     # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        #     print("Page Down")
-        #     # elem.send_keys(Keys.PAGE_DOWN)
-        #     elem.send_keys(Keys.END)
-        #
-        #     time.sleep(LoadingDelay)
-        #     # if count % 5 == 0:
-        #     #     self.SaveFile()
-        #     # ScrollCount -=1
-        #
-        #     print(count)
         return 0
 
     def Download_Images(self, count):
+        global DownCount, Temp, TempLinks, DownSuccess
+        count *= DownCount
+
         while(True):
             for link in imageLinks:
                 Image_name = link.replace("https://pbs.twimg.com/media/", "")
@@ -213,7 +166,8 @@ class Twitter:
                         res_data = res.read()
                         with open(Save_Path + Image_name, 'wb') as file:
                             file.write(res_data)
-                            imageLinks.remove(link)
+                            DownSuccess += 1
+                            printxy(27, 51, "[!]DownLoading :%s" % DownSuccess)
                     count -= 1
 
                     if count == 0:
@@ -222,8 +176,45 @@ class Twitter:
                 except Exception as e:
                     print(e)
                     count -= 1
+                    if count == 0:
+                        return 0
 
         return 0
+
+    def Get_Images(self, count):
+        global LinkCount, imageLinks, RmvimageLinks, TempLinks, Temp, SuccessCount, ScanCount
+        countTemp = count
+        count *= ImageCount
+        while(True):
+            try:
+                for link in driver.find_elements_by_css_selector('div.AdaptiveMedia-photoContainer'):
+                    if link.get_attribute('data-image-url') not in imageLinks and link.get_attribute('data-image-url') not in RmvimageLinks:
+                        imageLinks.append(link.get_attribute('data-image-url'))
+                        print(link.get_attribute('data-image-url'))
+                        SuccessCount += 1
+                        printxy(25, 51, "[!]Found :%s" % SuccessCount)
+                        ScanCount += 1
+                        LinkCount += 1
+
+                    count -= 1
+                    if count == 0:
+                        if Temp is True:
+                            countTemp *= ImageCount - 1
+                            # print(imageLinks)
+                            for index in range(0, countTemp):
+                                del imageLinks[0]
+
+                        print(imageLinks)
+                        return 0
+
+                    if ScanCount > 10:
+                        ScanCount = 0
+                        return 0
+
+            except Exception as e:
+                print("error:", e)
+                count -= 1
+                break
 
     def UI(self):
         printxy(28, 110, "v 1.0")
@@ -236,36 +227,33 @@ class Twitter:
         printxy(12, 20, "                                                                           ")
 
     def Run(self):
+        global DownCount, imageLinks, ImageCount, RmvimageLinks, Temp
         if LoginSuccess is False:
             self.login_twitter()
 
         time.sleep(5)
         self.Scroll()
 
+
         time.sleep(2)
+        ImageCount += 1
         self.Get_Images(5)
 
-        time.sleep(2)
-        self.Download_Images(5)
+        if Temp is True:
+            RmvimageLinks = imageLinks
 
+        Temp = True
+
+        time.sleep(2)
+        DownCount += 1
+        self.Download_Images(5)
 
 if __name__ == "__main__":
     t = Twitter()
-    # t.login_twitter()
-    # print("Get_Images")
-    # Get = multiprocessing.Process(target=t.Get_Images)
-    # Get.start()
-    #
-    # print("Get_ImagesThread")
-    # down = multiprocessing.Process(target=t.Get_ImagesThread)
-    # down.start()
-    #
-    # print("Down")
-    # do = multiprocessing.Process(target=t.Download_Images)
-    # do.start()
     while(True):
         t.Run()
 
+# [i for i in a if not i in b or b.remove(i)]
 #
 # from selenium import webdriver
 # from selenium.webdriver.chrome.options import Options
@@ -343,3 +331,65 @@ if __name__ == "__main__":
 #         time.sleep(2)
 #         print("Hello1")
 #         driver.get("https://twitter.com/login")
+#
+# a = []
+# list ={'https://pbs.twimg.com/media/Dq2G4pgVAAUq4WY.jpg', 'https://pbs.twimg.com/media/Dq12M1aU8AEUg80.jpg', 'https://pbs.twimg.com/media/Dq1asWBUUAAPQzX.jpg', 'https://pbs.twimg.com/media/Dq2HUIwWsAM9uPW.jpg', 'https://pbs.twimg.com/media/Dq135weU8AMDIyx.jpg'}
+#
+# a = set(list) ^ set(a)
+# print(a)
+
+
+# if imageLinks[LinkCount - 2] == imageLinks[LinkCount - 1] and LinkCount > 1:
+#     print('Del')
+#     del imageLinks[imageLinks]
+#     LinkCount -= 1
+# else:
+#     LinkList.write(imageLinks[LinkCount-1]+ '\n')
+
+# if LinkCount > 10:
+#     print(imageLinks, LinkCount)
+#     return
+
+    # t.login_twitter()
+    # print("Get_Images")
+    # Get = multiprocessing.Process(target=t.Get_Images)
+    # Get.start()
+    #
+    # print("Get_ImagesThread")
+    # down = multiprocessing.Process(target=t.Get_ImagesThread)
+    # down.start()
+    #
+    # print("Down")
+    # do = multiprocessing.Process(target=t.Download_Images)
+    # do.start()
+
+# Links = imageLinks
+# if imageLinks[0] in RmvimageLinks:
+#     Links = [i for i in RmvimageLinks if not i in imageLinks or imageLinks.remove(i)]
+#     print(Links)
+
+
+        # count = 0
+        # while (ScrollCount > 0):
+        #     count += 1
+        #     # driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        #     print("Page Down")
+        #     # elem.send_keys(Keys.PAGE_DOWN)
+        #     elem.send_keys(Keys.END)
+        #
+        #     time.sleep(LoadingDelay)
+        #     # if count % 5 == 0:
+        #     #     self.SaveFile()
+        #     # ScrollCount -=1
+        #
+        #     print(count)
+
+        # LoginSuccess =True
+        # if driver.find_element_by_class_name("EdgeButtom--medium").click() is None:
+        #     os.system("cls")
+        #     LoginSuccess = False
+        #     ShowLoading = False
+        #     self.login_twitter()
+        # else:
+        #     LoginSuccess = True
+        #     ShowLoading = False
