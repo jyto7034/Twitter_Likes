@@ -20,11 +20,17 @@ driver = webdriver.Firefox(executable_path=r"C:\Twitter_Likes\geckodriver.exe", 
 driver.get("https://twitter.com/i/likes")
 os.system('cls')
 
+<<<<<<< HEAD
 ScanCount = 0
 DownSuccess = 0
 SuccessCount = 0
 DownCount = 0
 ImageCount = 0
+=======
+
+DownCount = 1
+
+>>>>>>> 97a05ea14d7edd3fee47fb1f0af99ca120da4e54
 imageLinks = []
 RmvimageLinks = []
 TempLinks = []
@@ -32,7 +38,11 @@ Temp = False
 LinkCount = 0
 ScrollCount = 20
 LoadingDelay = 5
+<<<<<<< HEAD
 Save_Path = "L:\pic\\"
+=======
+Save_Path = "C:\\PIC\\"
+>>>>>>> 97a05ea14d7edd3fee47fb1f0af99ca120da4e54
 LoginSuccess = False
 GetPage = True
 LoadingArt = ["|", "/", "~", "\\"]
@@ -79,7 +89,11 @@ def printxy(r, c, s):
 
 
 class Twitter:
+<<<<<<< HEAD
     global driver, DownCount, ImageCount, RmvimageLinks, Temp
+=======
+    global driver, DownCount
+>>>>>>> 97a05ea14d7edd3fee47fb1f0af99ca120da4e54
 
     def Loading_UI(self):
         global LoadingArt, ShowLoading
@@ -123,6 +137,44 @@ class Twitter:
 
         return 0
 
+<<<<<<< HEAD
+=======
+    def Get_Images(self, count):
+        global LinkCount
+        while(True):
+            try:
+                for link in driver.find_elements_by_css_selector('div.AdaptiveMedia-photoContainer'):
+
+                    if link in imageLinks:
+                        imageLinks.remove(link)
+                        print("Del")
+
+                    else:
+                        imageLinks.append(link.get_attribute('data-image-url'))
+                        print("[!]Found :%s" % len(imageLinks))
+                        print(count)
+                        LinkCount += 1
+
+
+                    # if imageLinks[LinkCount - 2] == imageLinks[LinkCount - 1] and LinkCount > 1:
+                    #     print('Del')
+                    #     del imageLinks[imageLinks]
+                    #     LinkCount -= 1
+                    # else:
+                    #     LinkList.write(imageLinks[LinkCount-1]+ '\n')
+
+                    # if LinkCount > 10:
+                    #     print(imageLinks, LinkCount)
+                    #     return
+                    count -= 1
+                    if count == 0:
+                        return 0
+
+            except Exception as e:
+                print("error:", e)
+                count -= 1
+
+>>>>>>> 97a05ea14d7edd3fee47fb1f0af99ca120da4e54
     def SaveFile(self):
         if os.path.isfile("L:\LinkList.txt"):
             print("Remove")
@@ -151,20 +203,28 @@ class Twitter:
         return 0
 
     def Download_Images(self, count):
+<<<<<<< HEAD
         global DownCount, Temp, TempLinks, DownSuccess
         count *= DownCount
 
+=======
+        count = DownCount * count
+>>>>>>> 97a05ea14d7edd3fee47fb1f0af99ca120da4e54
         while(True):
             for link in imageLinks:
                 Image_name = link.replace("https://pbs.twimg.com/media/", "")
-
                 try:
                     with urllib.request.urlopen(link) as res:
                         res_data = res.read()
                         with open(Save_Path + Image_name, 'wb') as file:
                             file.write(res_data)
+<<<<<<< HEAD
                             DownSuccess += 1
                             printxy(27, 51, "[!]DownLoading :%s" % DownSuccess)
+=======
+                            # imageLinks.remove(link)
+                            print(link)
+>>>>>>> 97a05ea14d7edd3fee47fb1f0af99ca120da4e54
                     count -= 1
 
                     if count == 0:
@@ -224,7 +284,11 @@ class Twitter:
         printxy(12, 20, "                                                                           ")
 
     def Run(self):
+<<<<<<< HEAD
         global DownCount, imageLinks, ImageCount, RmvimageLinks, Temp
+=======
+        global DownCount
+>>>>>>> 97a05ea14d7edd3fee47fb1f0af99ca120da4e54
         if LoginSuccess is False:
             self.login_twitter()
 
@@ -235,6 +299,8 @@ class Twitter:
         time.sleep(2)
         ImageCount += 1
         self.Get_Images(5)
+        DownCount += 1
+        # print(imageLinks)
 
         if Temp is True:
             RmvimageLinks = imageLinks
