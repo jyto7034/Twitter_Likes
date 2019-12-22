@@ -10,14 +10,13 @@ from ctypes import *
 
 options = webdriver.ChromeOptions()
 # options.add_argument("--disable-setuid-sandbox")
-options.add_argument('headless')
-driver = webdriver.Chrome(r"C:\Users\BlasterDinray\Desktop\Twitter_Likes\chromedriver.exe", options=options)
+# options.add_argument('headless')
+driver = webdriver.Chrome(r"D:\Completed Work\Twitter_Likes\chromedriver.exe", options=options)
 os.system('cls')
 
 Save_Path = 'D:\\twitter\\'
 DownloadedList = []
 OrgImgLinkList = []
-DownSuccess = 0
 STD_OUTPUT_HANDLE = -11
 class COORD(Structure):
     pass
@@ -49,15 +48,17 @@ def UI():
 
 
 def OpenPage(Link):
+    global driver
     driver.get(Link)
     return 0
 
 def login_twitter(_id, _pass):
+     time.sleep(0.2)
      driver.find_element_by_xpath("/html/body/div[1]/div[2]/div/div/div[1]/form/fieldset/div[1]/input").send_keys(_id)
-     driver.implicitly_wait(0.5)
+     time.sleep(0.2)
 
      driver.find_element_by_xpath("/html/body/div[1]/div[2]/div/div/div[1]/form/fieldset/div[2]/input").send_keys(_pass)
-     driver.implicitly_wait(0.5)
+     time.sleep(0.2)
 
      driver.find_element_by_class_name("EdgeButtom--medium").click()
      return 0
@@ -70,17 +71,30 @@ def Scroll():
 
 
 def GetImgLinkAndNameFromSite():
-    global OrgImgLinkList
-    for link in driver.find_elements_by_css_selector('div.AdaptiveMedia-photoContainer'):
-        ImgLink = link.get_attribute('data-image-url')
-        if ImgLink not in OrgImgLinkList:
-            OrgImgLinkList.append(ImgLink)
-            printxy(26, 49, "[!]Found :%s" % len(OrgImgLinkList))
+    global OrgImgLinkList, driver
+    for link in driver.find_elements_by_class_name('css-9pa8cd'):
+        try:
+            ImgLink = link.get_attribute('src')
+            if 'media' in ImgLink and 'name' in ImgLink:
+                temp = ""
+                s = ''.join(ImgLink)
+                if 'jpg' in ImgLink:
+                    temp += s[:ImgLink.find('?')]
+                    temp += ".jpg"
+                if 'png' in ImgLink:
+                    temp += s[:ImgLink.find('?')]
+                    temp += ".png"
+                if temp not in OrgImgLinkList:
+                    OrgImgLinkList.append(temp)
+                    printxy(26, 49, "[!]Found :%s" % len(OrgImgLinkList))
+        except Exception as e:
+            print(e)
     return 0
 
-
+#https://pbs.twimg.com/media/EMT_lrdUwAAGj-q?format=jpg&name=900x900
+#https://pbs.twimg.com/media/EMT_lrdUwAAGj-q?format=jpg&name=medium
 def Download_Images():
-    global DownSuccess, OrgImgLinkList, DownloadedList
+    global OrgImgLinkList, DownloadedList
     for link in OrgImgLinkList:
         if link not in DownloadedList:
             ImgName = link.replace("https://pbs.twimg.com/media/", "")
@@ -89,30 +103,42 @@ def Download_Images():
                     res_data = res.read()
                     with open(Save_Path + ImgName, 'wb') as file:
                         file.write(res_data)
-                        DownSuccess = DownSuccess + 1
-                        printxy(27, 49, "[!]DownLoading :%s" % DownSuccess)
+                        printxy(27, 49, "[!]DownLoading :%s" % len(DownloadedList))
             except Exception as e:
-                return 0
+                print(e)
             DownloadedList.append(link)
     return 0
 
 
 
 if __name__ == "__main__":
+    url = 'https://twitter.com/D3vFox/likes'
+    _id = 'jyto7034@gmail.com'
+    _pass = 'dlrudgus12'
+    # OpenPage(url)
+    # login_twitter(_id, _pass)
+    # print(len(driver.find_elements_by_class_name('css-9pa8cd')))
+    # time.sleep(3)
+    # GetImgLinkAndNameFromSite()
+
+
+    # url = input('Url :')
+    # _id = input('ID :')
+    # _pass = input('PASS :')
+
+
+    os.system('cls')
+    OpenPage(url)
+    login_twitter(_id, _pass)
     UI()
-    OpenPage('https://twitter.com/WTFCats3')
-    driver.implicitly_wait(2)
+    time.sleep(2)
     Scroll()
-    driver.implicitly_wait(2)
-    GetImgLinkAndNameFromSite()
-    driver.implicitly_wait(2)
-    Download_Images()
     os.system('cls')
     UI()
     while(True):
-        driver.implicitly_wait(2)
+        time.sleep(2)
         Scroll()
-        driver.implicitly_wait(2)
+        time.sleep(3)
         GetImgLinkAndNameFromSite()
-        driver.implicitly_wait(2)
+        time.sleep(2)
         Download_Images()
