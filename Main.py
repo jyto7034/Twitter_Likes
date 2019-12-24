@@ -10,13 +10,13 @@ from ctypes import *
 
 options = webdriver.ChromeOptions()
 # options.add_argument("--disable-setuid-sandbox")
-# options.add_argument('headless')
+options.add_argument('headless')
 driver = webdriver.Chrome(r"D:\Completed Work\Twitter_Likes\chromedriver.exe", options=options)
 os.system('cls')
 
-Save_Path = 'D:\\twitter\\'
 DownloadedList = []
 OrgImgLinkList = []
+ImgLinkList = []
 STD_OUTPUT_HANDLE = -11
 class COORD(Structure):
     pass
@@ -71,31 +71,31 @@ def Scroll():
 
 
 def GetImgLinkAndNameFromSite():
-    global OrgImgLinkList, driver
+    global OrgImgLinkList, driver, ImgLinkList
     for link in driver.find_elements_by_class_name('css-9pa8cd'):
         try:
             ImgLink = link.get_attribute('src')
-            if 'media' in ImgLink and 'name' in ImgLink:
-                temp = ""
-                s = ''.join(ImgLink)
-                if 'jpg' in ImgLink:
-                    temp += s[:ImgLink.find('?')]
-                    temp += ".jpg"
-                if 'png' in ImgLink:
-                    temp += s[:ImgLink.find('?')]
-                    temp += ".png"
-                if temp not in OrgImgLinkList:
-                    OrgImgLinkList.append(temp)
-                    printxy(26, 49, "[!]Found :%s" % len(OrgImgLinkList))
+            if ImgLink not in OrgImgLinkList:
+                OrgImgLinkList.append(ImgLink)
+                if 'media' in ImgLink and 'name' in ImgLink:
+                    temp = ""
+                    s = ''.join(ImgLink)
+                    if 'jpg' in ImgLink:
+                        temp += s[:ImgLink.find('?')]
+                        temp += ".jpg"
+                    if 'png' in ImgLink:
+                        temp += s[:ImgLink.find('?')]
+                        temp += ".png"
+                    if temp not in ImgLinkList:
+                        ImgLinkList.append(temp)
+                        printxy(26, 49, "[!]Found :%s" % len(ImgLinkList))
         except Exception as e:
             print(e)
     return 0
 
-#https://pbs.twimg.com/media/EMT_lrdUwAAGj-q?format=jpg&name=900x900
-#https://pbs.twimg.com/media/EMT_lrdUwAAGj-q?format=jpg&name=medium
-def Download_Images():
-    global OrgImgLinkList, DownloadedList
-    for link in OrgImgLinkList:
+def Download_Images(Save_Path):
+    global ImgLinkList, DownloadedList
+    for link in ImgLinkList:
         if link not in DownloadedList:
             ImgName = link.replace("https://pbs.twimg.com/media/", "")
             try:
@@ -104,41 +104,32 @@ def Download_Images():
                     with open(Save_Path + ImgName, 'wb') as file:
                         file.write(res_data)
                         printxy(27, 49, "[!]DownLoading :%s" % len(DownloadedList))
+                        del ImgLinkList[ImgLinkList.index(link)]
+                        DownloadedList.append(link)
             except Exception as e:
                 print(e)
-            DownloadedList.append(link)
+        else:
+            del ImgLinkList[ImgLinkList.index(link)]
     return 0
 
 
 
 if __name__ == "__main__":
-    url = 'https://twitter.com/D3vFox/likes'
-    _id = 'jyto7034@gmail.com'
-    _pass = 'dlrudgus12'
-    # OpenPage(url)
-    # login_twitter(_id, _pass)
-    # print(len(driver.find_elements_by_class_name('css-9pa8cd')))
-    # time.sleep(3)
-    # GetImgLinkAndNameFromSite()
-
-
-    # url = input('Url :')
-    # _id = input('ID :')
-    # _pass = input('PASS :')
+    url = input('Url :')
+    Save_Path = input('PATH :')
+    _id = input('ID :')
+    _pass = input('PASS :')
 
 
     os.system('cls')
     OpenPage(url)
     login_twitter(_id, _pass)
-    UI()
     time.sleep(2)
     Scroll()
     os.system('cls')
     UI()
     while(True):
-        time.sleep(2)
         Scroll()
         time.sleep(3)
         GetImgLinkAndNameFromSite()
-        time.sleep(2)
-        Download_Images()
+        Download_Images(Save_Path)
